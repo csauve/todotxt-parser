@@ -85,3 +85,16 @@ describe "heirarchical mode parser", ->
     assert.equal result[0].subtasks[0].priority, "B"
     assert.equal result[0].subtasks[0].contexts[0], "context1"
     assert.equal result[0].subtasks[0].projects[1], "Project2"
+
+  it "supports inherited traits from parents", ->
+    result = parser.relaxed """
+      (A) Task A +BigProject @context1 due:tomorrow t:wednesday
+        Task B +SubProject @context2 due:today
+    """, hierarchical: true, inherit: true
+
+    assert.deepEqual result[0].subtasks[0].contexts, ["context1", "context2"]
+    assert.deepEqual result[0].subtasks[0].projects, ["BigProject", "SubProject"]
+    # subtask metadata should shadow parents
+    assert.equal result[0].subtasks[0].metadata["due"], "today"
+    assert.equal result[0].subtasks[0].metadata["t"], "wednesday"
+    assert.equal result[0].subtasks[0].priority, "A"

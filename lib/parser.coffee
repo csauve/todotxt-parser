@@ -33,6 +33,7 @@ module.exports =
       requireCompletionDate: true
       ignorePriorityCase: false
       heirarchical: false
+      inherit: false
       commentRegex: null
       projectRegex: /\s\+(\S+)/g
       contextRegex: /\s@(\S+)/g
@@ -40,49 +41,95 @@ module.exports =
       extensions: []
 
     pattern = buildPattern options
-    root = {subtasks: [], indentLevel: -1, text: "root"}
+    root =
+      subtasks: []
+      indentLevel: -1
+      contexts: []
+      projects: []
+      metadata: {}
     stack = [root]
 
     for line in s.split "\n"
       taskMatch = line.match pattern
       commentMatch = if options.commentRegex then line.match options.commentRegex
       if !taskMatch or commentMatch then continue
-
       text = taskMatch[5].trim()
-      projects = while match = options.projectRegex.exec text
-        match[1]
-      contexts = while match = options.contextRegex.exec text
-        match[1]
+
+      indentLevel = if match = line.match /^(\s+).+/
+          # if line starts with a space, then count the number of leading whitespace characters
+          match[1].length
+        else if match = line.match /^x(\s+).+/
+          # if line starts with x, then count the whitespace after it + 1 (for the x)
+          match[1].length + 1
+        else 0
+
+      # figure out where we are in the hierarchy
+      prevSibling = _.last(_.last(stack).subtasks) || _.last(stack)
+      if indentLevel > prevSibling.indentLevel
+        stack.push prevSibling
+      while indentLevel <= _.last(stack).indentLevel
+        stack.pop()
+
+      parent = _.last(stack)
+
+      # projects
+      projectsSet = {}
+      if options.inherit
+        projectsSet[project] = true for project in parent.projects
+      while match = options.projectRegex.exec text
+        projectsSet[match[1]] = true
+
+      # contexts
+      contextsSet = {}
+      if options.inherit
+        contextsSet[context] = true for context in parent.contexts
+      while match = options.contextRegex.exec text
+        contextsSet[match[1]] = true
+
+      # metadata from extensions
       metadata = {}
+      if options.inherit
+        metadata[key] = value for key, value of parent.metadata
       for dataParser in options.extensions
         data = dataParser text
         for key, value of data
           metadata[key] = value
 
+      complete = if taskMatch[1]
+        true
+      else if options.inherit
+        parent.complete
+      else false
+
+      dateCreated = if taskMatch[4]
+        options.dateParser taskMatch[4]
+      else if options.inherit
+        parent.dateCreated
+      else null
+
+      dateCompleted = if taskMatch[2]
+        options.dateParser taskMatch[2]
+      else if options.inherit
+        parent.dateCompleted
+      else null
+
+      priority = (taskMatch[3] || metadata.pri)?.toUpperCase() || if options.inherit
+        parent.priority
+      else null
+
       task =
         raw: taskMatch[0]
         text: text
-        projects: projects
-        contexts: contexts
-        complete: taskMatch[1]?
-        dateCreated: if taskMatch[4] then options.dateParser taskMatch[4] else null
-        dateCompleted: if taskMatch[2] then options.dateParser taskMatch[2] else null
-        priority: (taskMatch[3] || metadata.pri)?.toUpperCase() || null
+        projects: key for key of projectsSet
+        contexts: key for key of contextsSet
+        complete: complete
+        dateCreated: dateCreated
+        dateCompleted: dateCompleted
+        priority: priority
         metadata: metadata
         subtasks: []
-        indentLevel: if match = line.match /^(\s+).+/
-            # if line starts with a space, then count the number of leading whitespace characters
-            match[1].length
-          else if match = line.match /^x(\s+).+/
-            # if line starts with x, then count the whitespace after it + 1 (for the x)
-            match[1].length + 1
-          else 0
+        indentLevel: indentLevel
 
-      prevSibling = _.last(_.last(stack).subtasks) || _.last(stack)
-      if task.indentLevel > prevSibling.indentLevel
-        stack.push prevSibling
-      while task.indentLevel <= _.last(stack).indentLevel
-        stack.pop()
       _.last(stack).subtasks.push task
 
     root.subtasks
@@ -101,6 +148,7 @@ module.exports =
       requireCompletionDate: false
       ignorePriorityCase: true
       heirarchical: false
+      inherit: false
       commentRegex: /^\s*#.*$/
       projectRegex: /(?:\s+|^)\+(\S+)/g
       contextRegex: /(?:\s+|^)@(\S+)/g
