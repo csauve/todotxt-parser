@@ -3,9 +3,7 @@ parser = require ".."
 
 # test the parser against examples from the official format guide:
 # https://github.com/ginatrapani/todo.txt-cli/wiki/The-Todo.txt-Format
-#
-# todo: test heirarchical support
-describe "parser", ->
+describe "standard mode parser", ->
 
   it "should parse one line as one task", ->
     result = parser.canonical "Review Tim's pull request"
@@ -19,6 +17,8 @@ describe "parser", ->
       dateCompleted: null
       priority: null
       metadata: {}
+      subtasks: []
+      indentLevel: 0
     ]
 
   it "should parse one task per line and keep tasks in order", ->
