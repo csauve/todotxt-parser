@@ -59,10 +59,10 @@ describe "standard mode parser", ->
 
   it "should find creation date immediately after task priority", ->
     result = parser.canonical "2011-03-02 Document +TodoTxt task format"
-    assert.equal result[0].dateCreated, 1299024000000
+    assert.equal result[0].dateCreated, "2011-03-02T00:00:00.000Z"
 
     result = parser.canonical "(A) 2011-03-02 Call Mom"
-    assert.equal result[0].dateCreated, 1299024000000
+    assert.equal result[0].dateCreated, "2011-03-02T00:00:00.000Z"
 
     result = parser.canonical "(A) Call Mom 2011-03-02"
     assert.equal result[0].dateCreated, null
@@ -70,10 +70,7 @@ describe "standard mode parser", ->
   it "should find contexts and projects anywhere in the text", ->
     result = parser.canonical "@iphone +Family Call Mom +PeaceLoveAndHappiness @phone"
     assert.deepEqual result[0].projects, ["Family", "PeaceLoveAndHappiness"]
-    assert.deepEqual result[0].contexts, ["phone"] # canonical contexts require 1 space preceding
-
-    result = parser.relaxed "@iphone Call Mom @phone"
-    assert.deepEqual result[0].contexts, ["iphone", "phone"] # relaxed parser can find leading metadata
+    assert.deepEqual result[0].contexts, ["iphone", "phone"]
 
     result = parser.relaxed "Email SoAndSo at soandso@example.com and learn how to add 2+2"
     assert.deepEqual result[0].contexts, []

@@ -5,7 +5,7 @@ buildPattern = (opt) ->
   interp = (expr) ->
     expr().toString()[1..-2]
 
-  DATE = -> opt.dateRegex || /\d{4}-\d{2}-\d{2}/
+  DATE = -> opt.dateRegex
   START = -> if opt.relaxedWhitespace then /^\s*/ else /^/
   SPACE = -> if opt.relaxedWhitespace then /\s+/ else /\s/
   COMPLETE = -> ///
@@ -27,16 +27,16 @@ module.exports =
   parse: (s, options = {}) ->
     # the defaults adhere to Gina Trapani's vanilla/canonical todo.txt-cli format & implementation
     _.defaults options,
-      dateParser: (s) -> Date.parse s
-      dateRegex: null
+      dateParser: (s) -> new Date(s).toJSON()
+      dateRegex: /\d{4}-\d{2}-\d{2}/
       relaxedWhitespace: false
       requireCompletionDate: true
       ignorePriorityCase: false
       heirarchical: false
       inherit: false
       commentRegex: null
-      projectRegex: /\s\+(\S+)/g
-      contextRegex: /\s@(\S+)/g
+      projectRegex: /(?:\s|^)\+(\S+)/g
+      contextRegex: /(?:\s|^)@(\S+)/g
       # collection of functions that parse the task text and return key:value objects
       extensions: []
 
@@ -142,8 +142,8 @@ module.exports =
   # parsing function with relaxed options
   relaxed: (s, options = {}) ->
     module.exports.parse s, _.defaults options,
-      dateParser: (s) -> Date.parse s
-      dateRegex: null
+      dateParser: (s) -> new Date(s).toJSON()
+      dateRegex: /\d{4}-\d{2}-\d{2}/
       relaxedWhitespace: true
       requireCompletionDate: false
       ignorePriorityCase: true
