@@ -34,9 +34,11 @@ var tasks = parser.relaxed("x 2014-07-04 (A) 2014-06-19 Document YTD spending on
     "raw": "x 2014-07-04 (A) 2014-06-19 Document YTD spending on +SocialEvents for @Alex due:2014-08-01",
     // the trimmed content of the line following the creation date
     "text": "Document YTD spending on +SocialEvents for @Alex due:2014-08-01",
-    // projects are found in the `text` field and begin with "+". Empty when none present
+    /* projects are found in the `text` field and begin with "+".
+     * Empty when none present */
     "projects": ["SocialEvents"],
-    // contexts are found in the `text` field and begin with "@". Empty when none present
+    /* contexts are found in the `text` field and begin with "@".
+     * Empty when none present */
     "contexts": ["Alex"],
     // indicates if the task is marked as completed
     "complete": true,
@@ -44,13 +46,20 @@ var tasks = parser.relaxed("x 2014-07-04 (A) 2014-06-19 Document YTD spending on
     "dateCreated": "2014-06-19T00:00:00.000Z",
     // ISO 8601 UTC datetime. Null if not present
     "dateCompleted": "2014-07-04T00:00:00.000Z",
-    // The upper case A-Z priority. Null if not present
+    /* The upper case A-Z priority. If priority was not
+     * explicitly given, `metadata.pri` will be used if
+     * it's present. Otherwise null
+     */
     "priority": "A",
     // Stores data parsed by metadata extensions. Defaults to {}
     "metadata": {"due": "2014-08-01"},
-    // In hierarchical mode, contains any direct children at a higher indentation level
+    /* In hierarchical mode, contains any direct children
+     * at a higher indentation level
+     */
     "subtasks": [],
-    // Indentation level of the task in character columns. See hierarchical mode
+    /* Indentation level of the task in character columns.
+     * See hierarchical mode for more details
+     */
     "indentLevel": 0
   }
 ]
