@@ -202,8 +202,9 @@ tasks = parser.relaxed """
 Tasks A and B will be root level siblings even though they are not indented the same amount. Task B has three subtasks: C, D, and F. Task D has a single subtask, E. Even though tasks E and C are indented the same amount, it's their position relative to the previous task that matters. The best practice is to use consistent indentation.
 
 How is `indentLevel` determined? There are two rules:
+
 1. If the line **immediately** begins with the completion mark "x", then `indentLevel` counts it **and** contiguous whitespace characters following it
-1. Otherwise, `indentLevel` is the number of leading whitespace characters
+2. Otherwise, `indentLevel` is the number of leading whitespace characters
 
 This means you can either place the completion mark in the first column, or after the indent:
 ```
@@ -223,7 +224,7 @@ x   Task E
     Task F
   Task G
 ```
-It's important to note that tasks B and C are siblings. If the intent was to C be a subtask of B, then the first format should have been used (add at least 1 extra column of leading whitespace).
+It's important to note that tasks B and C are siblings. If the intent was to have C be a subtask of B, then the first format should have been used (add at least 1 extra column of leading whitespace).
 
 ### inherit
 The `inherit` option is only applicable to hierarchical mode, and is disabled by default. When enabled, subtasks will inherit the metadata of their ancestors. This includes projects, contexts, completeness, creation and completion dates, priority, and extension metadata. Subtasks can shadow ancestral metadata by explicitly defining it themselves.
