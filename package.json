@@ -1,6 +1,6 @@
 {
   "name": "todotxt-parser",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "A parser for Gina Trapani's todo.txt format with optional extended features",
   "main": "index.js",
   "scripts": {
