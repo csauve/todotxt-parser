@@ -6,7 +6,7 @@ parser = require ".."
 describe "standard mode parser", ->
 
   it "should parse one line as one task", ->
-    result = parser.canonical "Review Tim's pull request"
+    result = parser.parse "Review Tim's pull request"
     assert.deepEqual result, [
       raw: "Review Tim's pull request"
       text: "Review Tim's pull request"
@@ -22,14 +22,14 @@ describe "standard mode parser", ->
     ]
 
   it "should parse one task per line and keep tasks in order", ->
-    result = parser.canonical """
+    result = parser.parse """
       Task A
       Task B
     """
     assert.equal result[0].text, "Task A"
     assert.equal result[1].text, "Task B"
 
-    result = parser.canonical """
+    result = parser.parse """
       Task B
       Task A
     """
@@ -37,7 +37,7 @@ describe "standard mode parser", ->
     assert.equal result[1].text, "Task A"
 
   it "should find priority at the start of the text", ->
-    result = parser.canonical "(A) Call Mom"
+    result = parser.parse "(A) Call Mom"
     assert.equal result[0].priority, "A"
 
     result = parser.parse "(a) Call Mom",
@@ -48,27 +48,27 @@ describe "standard mode parser", ->
     result = parser.relaxed "Call Mom pri:A"
     assert.equal result[0].priority, "A"
 
-    result = parser.canonical "Really gotta call Mom (A) @phone @someday"
+    result = parser.parse "Really gotta call Mom (A) @phone @someday"
     assert.equal result[0].priority, null
 
-    result = parser.canonical "(b) Get back to the boss"
+    result = parser.parse "(b) Get back to the boss"
     assert.equal result[0].priority, null
 
-    result = parser.canonical "(B)->Submit TPS report"
+    result = parser.parse "(B)->Submit TPS report"
     assert.equal result[0].priority, null
 
   it "should find creation date immediately after task priority", ->
-    result = parser.canonical "2011-03-02 Document +TodoTxt task format"
+    result = parser.parse "2011-03-02 Document +TodoTxt task format"
     assert.equal result[0].dateCreated, "2011-03-02T00:00:00.000Z"
 
-    result = parser.canonical "(A) 2011-03-02 Call Mom"
+    result = parser.parse "(A) 2011-03-02 Call Mom"
     assert.equal result[0].dateCreated, "2011-03-02T00:00:00.000Z"
 
-    result = parser.canonical "(A) Call Mom 2011-03-02"
+    result = parser.parse "(A) Call Mom 2011-03-02"
     assert.equal result[0].dateCreated, null
 
   it "should find contexts and projects anywhere in the text", ->
-    result = parser.canonical "@iphone +Family Call Mom +PeaceLoveAndHappiness @phone"
+    result = parser.parse "@iphone +Family Call Mom +PeaceLoveAndHappiness @phone"
     assert.deepEqual result[0].projects, ["Family", "PeaceLoveAndHappiness"]
     assert.deepEqual result[0].contexts, ["iphone", "phone"]
 
@@ -78,10 +78,10 @@ describe "standard mode parser", ->
 
   it "should detect completed tasks", ->
     # canonical requires a completion date
-    result = parser.canonical "x completed task"
+    result = parser.parse "x completed task"
     assert.equal result[0].complete, false
 
-    result = parser.canonical "x 2011-03-03 Call Mom"
+    result = parser.parse "x 2011-03-03 Call Mom"
     assert.equal result[0].complete, true
 
     # relaxed may leave out the completion date
@@ -107,6 +107,10 @@ describe "standard mode parser", ->
     # custom extensions
     result = parser.parse "Stop saying #yolo #swag all the time",
       extensions: [
+        # a dummy extension to prove later extensions overwrite previous values
+        (text) ->
+          hashtags: null
+
         (text) ->
           metadataRegex = /(?:\s+|^)#(\S+)/g
           hashtags: while match = metadataRegex.exec text
@@ -114,25 +118,23 @@ describe "standard mode parser", ->
       ]
     assert.deepEqual result[0].metadata.hashtags, ["yolo", "swag"]
 
-  it "is configurable with options", ->
-    result = parser.parse "2 days from now Complete the +Registration diagram",
-      dateParser: (s) -> "DATE: #{s}"
-      dateRegex: /\d+ days from now/
-    assert.equal result[0].dateCreated, "DATE: 2 days from now"
-
+  it "should configurably allow relaxed whitespace", ->
     result = parser.parse "    incomplete task   @some-context",
       relaxedWhitespace: true
     assert.equal result[0].text, "incomplete task   @some-context"
     assert.deepEqual result[0].contexts, ["some-context"]
 
+  it "should configurably consider completion date optional", ->
     result = parser.parse "x complete task",
       requireCompletionDate: false
     assert.equal result[0].complete, true
 
+  it "should configurably ignore priority case", ->
     result = parser.parse "(a) complete task",
       ignorePriorityCase: true
     assert.equal result[0].priority, "A"
 
+  it "should configurably support comments", ->
     result = parser.relaxed """
       Task A
       # Task B
@@ -141,6 +143,7 @@ describe "standard mode parser", ->
     assert.equal result[0].text, "Task A"
     assert.equal result.length, 1
 
+  it "should configurably support custom project and context formats", ->
     result = parser.parse "(B) project(Cleanup) Schedule Goodwill pickup project(GarageSale) @phone",
       projectRegex: /(?:\s+|^)project\((\S+)\)/g
     assert.deepEqual result[0].projects, ["Cleanup", "GarageSale"]
@@ -148,3 +151,17 @@ describe "standard mode parser", ->
     result = parser.parse "(B) Schedule Goodwill pickup context(phone)",
       contextRegex: /(?:\s+|^)context\((\S+)\)/g
     assert.deepEqual result[0].contexts, ["phone"]
+
+  it "should configurably use a custom date pattern", ->
+    input = "dAtE(Jan 5) Schedule a meeting with Nancy"
+    options =
+      dateRegex: /date\(.+\)/
+      dateParser: (s) -> s
+
+    # this should not see the creation date, because the case doesnt match
+    result = parser.parse input, options
+    assert.equal result[0].dateCreated, null
+
+    options.dateRegex = /dAtE\(.+\)/i
+    result = parser.parse input, options
+    assert.equal result[0].dateCreated, "dAtE(Jan 5)"

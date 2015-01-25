@@ -3,7 +3,8 @@ _ = require "underscore"
 buildPattern = (opt) ->
   # returns interpolation-friendly regex
   interp = (expr) ->
-    expr().toString()[1..-2]
+    regex = expr().toString()
+    regex[1..(regex.lastIndexOf("/") - 1)]
 
   DATE = -> opt.dateRegex
   START = -> if opt.relaxedWhitespace then /^\s*/ else /^/
@@ -24,9 +25,9 @@ buildPattern = (opt) ->
   ///
 
 module.exports =
-  parse: (s, options = {}) ->
-    # the defaults adhere to Gina Trapani's vanilla/canonical todo.txt-cli format & implementation
-    _.defaults options,
+  options:
+    # Gina Trapani's todo.txt-cli format & implementation
+    CANONICAL:
       dateParser: (s) -> new Date(s).toJSON()
       dateRegex: /\d{4}-\d{2}-\d{2}/
       relaxedWhitespace: false
@@ -37,22 +38,39 @@ module.exports =
       commentRegex: null
       projectRegex: /(?:\s|^)\+(\S+)/g
       contextRegex: /(?:\s|^)@(\S+)/g
-      # collection of functions that parse the task text and return key:value objects
       extensions: []
+    RELAXED:
+      dateParser: (s) -> new Date(s).toJSON()
+      dateRegex: /\d{4}-\d{2}-\d{2}/
+      relaxedWhitespace: true
+      requireCompletionDate: false
+      ignorePriorityCase: true
+      heirarchical: false
+      inherit: false
+      commentRegex: /^\s*#.*$/
+      projectRegex: /(?:\s+|^)\+(\S+)/g
+      contextRegex: /(?:\s+|^)@(\S+)/g
+      extensions: [
+        (text) ->
+          metadata = {}
+          metadataRegex = /(?:\s+|^)(\S+):(\S+)/g
+          while match = metadataRegex.exec text
+            metadata[match[1].toLowerCase()] = match[2]
+          metadata
+      ]
 
+  parse: (s, options = {}) ->
+    _.defaults options, module.exports.options.CANONICAL
+    if options.hierarchical then options.relaxedWhitespace = true
     pattern = buildPattern options
-    root =
-      subtasks: []
-      indentLevel: -1
-      contexts: []
-      projects: []
-      metadata: {}
+    root = { subtasks: [], indentLevel: -1, contexts: [], projects: [], metadata: {} }
     stack = [root]
 
     for line in s.split "\n"
       taskMatch = line.match pattern
       commentMatch = if options.commentRegex then line.match options.commentRegex
       if !taskMatch or commentMatch then continue
+
       text = taskMatch[5].trim()
 
       indentLevel = if match = line.match /^(\s+).+/
@@ -134,30 +152,6 @@ module.exports =
 
     root.subtasks
 
-
-  # parsing function with default values
-  canonical: (s) ->
-    module.exports.parse s
-
   # parsing function with relaxed options
   relaxed: (s, options = {}) ->
-    module.exports.parse s, _.defaults options,
-      dateParser: (s) -> new Date(s).toJSON()
-      dateRegex: /\d{4}-\d{2}-\d{2}/
-      relaxedWhitespace: true
-      requireCompletionDate: false
-      ignorePriorityCase: true
-      heirarchical: false
-      inherit: false
-      commentRegex: /^\s*#.*$/
-      projectRegex: /(?:\s+|^)\+(\S+)/g
-      contextRegex: /(?:\s+|^)@(\S+)/g
-      # collection of functions that parse the task text and return key:value objects
-      extensions: [
-        (text) ->
-          metadata = {}
-          metadataRegex = /(?:\s+|^)(\S+):(\S+)/g
-          while match = metadataRegex.exec text
-            metadata[match[1].toLowerCase()] = match[2]
-          metadata
-      ]
+    module.exports.parse s, _.defaults options, module.exports.options.RELAXED

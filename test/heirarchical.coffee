@@ -86,7 +86,7 @@ describe "heirarchical mode parser", ->
     assert.equal result[0].subtasks[0].contexts[0], "context1"
     assert.equal result[0].subtasks[0].projects[1], "Project2"
 
-  it "supports inherited traits from parents", ->
+  it "should support inherited traits from parents", ->
     result = parser.relaxed """
       (A) Task A +BigProject @context1 due:tomorrow t:wednesday
         Task B +SubProject @context2 due:today
@@ -98,3 +98,31 @@ describe "heirarchical mode parser", ->
     assert.equal result[0].subtasks[0].metadata["due"], "today"
     assert.equal result[0].subtasks[0].metadata["t"], "wednesday"
     assert.equal result[0].subtasks[0].priority, "A"
+
+  it "should still correctly parse canonical format", ->
+    result = parser.parse """
+      Task A
+        x Task B
+    """, hierarchical: true
+    # in canonical mode, Task B is not complete because it has no completion date
+    assert.equal result[0].subtasks[0].text, "x Task B"
+    assert.equal result[0].subtasks[0].complete, false
+
+    # hierarchical mode implies relaxed whitespace
+    result = parser.parse """
+      Task A
+        x 2008-01-04   (B)   2008-01-02  Task B  @context  +Project
+    """, hierarchical: true
+    assert.equal result[0].subtasks[0].text, "Task B  @context  +Project"
+    assert.equal result[0].subtasks[0].complete, true
+    assert.deepEqual result[0].subtasks[0].contexts, ["context"]
+    assert.deepEqual result[0].subtasks[0].projects, ["Project"]
+
+  it "should propagate single-trait parents", ->
+    result = parser.parse """
+      @bank
+        deposit pay cheque
+        get some cash to pay back @Cathy
+    """, hierarchical: true, inherit: true
+    assert.equal result[0].text, "@bank"
+    assert.deepEqual result[0].subtasks[1].contexts, ["bank", "Cathy"]

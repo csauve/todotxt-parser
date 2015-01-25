@@ -65,28 +65,48 @@ var tasks = parser.relaxed("x 2014-07-04 (A) 2014-06-19 Document YTD spending on
 ]
 ```
 
-You can additionally pass options to `parse` to customize its behaviour. The default options represent strict vanilla `todo.txt` syntax:
-
-```js
-parser.parse(input, {
-  dateParser: function(s) { return new Date(s).toJSON(); },
-  dateRegex: /\d{4}-\d{2}-\d{2}/,
-  relaxedWhitespace: false,
-  requireCompletionDate: true,
-  ignorePriorityCase: false,
-  heirarchical: false,
-  inherit: false,
-  commentRegex: null,
-  projectRegex: /\s\+(\S+)/g,
-  contextRegex: /\s@(\S+)/g,
-  extensions: []
-});
-```
-
-See the section below for an explanation of each option.
+There are two parsing functions availalbe: `parser.relaxed(input, options)` and `parser.parse(input, options)`. Options can be omitted or partial, and these functions only differ in their default options. Calling `parser.relaxed(input)` is equivalent to calling `parser.parse(input, parser.options.RELAXED)`. The default options for `parser.parse(input)` are equal to `parser.options.CANONICAL`.
 
 ## Options
 *(Examples in CoffeeScript)*
+
+The exposed default options are as follows:
+```coffee
+options:
+  # Gina Trapani's todo.txt-cli format & implementation
+  CANONICAL:
+    dateParser: (s) -> new Date(s).toJSON()
+    dateRegex: /\d{4}-\d{2}-\d{2}/
+    relaxedWhitespace: false
+    requireCompletionDate: true
+    ignorePriorityCase: false
+    heirarchical: false
+    inherit: false
+    commentRegex: null
+    projectRegex: /(?:\s|^)\+(\S+)/g
+    contextRegex: /(?:\s|^)@(\S+)/g
+    extensions: []
+  RELAXED:
+    dateParser: (s) -> new Date(s).toJSON()
+    dateRegex: /\d{4}-\d{2}-\d{2}/
+    relaxedWhitespace: true
+    requireCompletionDate: false
+    ignorePriorityCase: true
+    heirarchical: false
+    inherit: false
+    commentRegex: /^\s*#.*$/
+    projectRegex: /(?:\s+|^)\+(\S+)/g
+    contextRegex: /(?:\s+|^)@(\S+)/g
+    extensions: [
+      (text) ->
+        metadata = {}
+        metadataRegex = /(?:\s+|^)(\S+):(\S+)/g
+        while match = metadataRegex.exec text
+          metadata[match[1].toLowerCase()] = match[2]
+        metadata
+    ]
+```
+
 ### dateParser
 A function accepting a string and returning a string, used to convert captured dates for the `dateCreated` and `dateCompleted` fields. It is recommended to return an ISO 8601 UTC datetime for consistency with the default date parser:
 ```coffee
@@ -94,13 +114,13 @@ A function accepting a string and returning a string, used to convert captured d
 ```
 
 ### dateRegex
-A `RegExp` used to match the creation and completion dates. It should not contain any capture groups. Matches will be parsed by the `dateParser` function. This option defaults to capturing "YYYY-MM-DD" format:
+A `RegExp` used to match the creation and completion dates. It should not contain any capture groups, and any modifiers (like case insensitivity) will be ignored. Matches will be parsed by the `dateParser` function. This option defaults to capturing "YYYY-MM-DD" format:
 ```coffee
 /\d{4}-\d{2}-\d{2}/
 ```
 
 ### relaxedWhitespace
-The todo.txt specification does not allow for more than 1 space between the completion mark, completion date, priority, creation date, and text. This ensures priorities and tasks line up so lines can be sorted consistently. When `relaxedWhitespace` is changed to `true`, these restrictions are lifted.
+The todo.txt specification does not allow for more than 1 space between the completion mark, completion date, priority, creation date, and text. This ensures priorities and tasks line up so lines can be sorted consistently. When `relaxedWhitespace` is set to `true`, these restrictions are lifted.
 ```coffee
 # none of these longer whitespace gaps would have been valid
 parser.parse "x   2013-11-11   (B)   2013-10-11   Clean up",
@@ -126,14 +146,13 @@ parser.parse "2014-12-02 Task A",
 parser.parse "x 2014-12-02 Task A",
   requireCompletionDate: false
 
-# a priority clears the ambiguity; it is now the creation date
+# a priority clears the ambiguity; it's now the creation date
 parser.parse "x (A) 2014-12-02 Task A",
   requireCompletionDate: false
 ```
 
 ### ignorePriorityCase
-When changed to `true`, both `A-Z` and `a-z` will be allowed for priority. The priority is still always converted to upper case after capture.
-
+When set to `true`, both `A-Z` and `a-z` will be allowed for priority. The priority is still always converted to upper case after capture.
 
 ### hierarchical
 Standard `todo.txt` has no notion of subtasks. Indentation is not allowed because the result is no longer sortable in a meaningful way. If you want to group a set of tasks under one project, each task needs to be annotated with the same `+Project` tag. This can clutter large projects, and it's difficult to see at a glance which tasks are associated by project. If the ability to sort lines alphabetically is not important to you, and you would rather be able to logically group tasks under other tasks, then there is **hierarchical mode**:
@@ -167,7 +186,7 @@ Instead of all tasks being stored in a single array, like standard mode with `re
 ]
 ```
 
-A task is considered a subtask when its indentation level is greater than its parent's. A new parent is chosen when the indentation level is greater than the previous sibling's indentation level. For example, what is the output of this?
+Hierarchical mode implies `relaxedWhitespace: true`. A task is considered a subtask when its indentation level is greater than its parent's. A new parent is chosen when the indentation level is greater than the previous sibling's indentation level. For example, what is the output of this?
 
 ```coffee
 tasks = parser.relaxed """
