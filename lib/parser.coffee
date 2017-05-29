@@ -10,8 +10,9 @@ buildPattern = (opt) ->
   START = -> if opt.relaxedWhitespace then /^\s*/ else /^/
   SPACE = -> if opt.relaxedWhitespace then /\s+/ else /\s/
   COMPLETE = -> ///
-    (x)#{if opt.requireCompletionDate then interp SPACE else ""}
-    (#{interp DATE})#{if opt.requireCompletionDate then "" else "?"}
+    (x)
+    (?:#{interp SPACE}(#{interp DATE}))
+    #{if opt.requireCompletionDate then "" else "?"}
   ///
   PRIORITY = -> if opt.ignorePriorityCase then /\(([A-Za-z])\)/ else /\(([A-Z])\)/
 

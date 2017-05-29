@@ -152,6 +152,11 @@ describe "standard mode parser", ->
       contextRegex: /(?:\s+|^)context\((\S+)\)/g
     assert.deepEqual result[0].contexts, ["phone"]
 
+  it "should parse as documented", ->
+    example = "x 2014-07-04 (A) 2014-06-19 Document YTD spending on +SocialEvents for @Alex due:2014-08-01"
+    result = parser.relaxed example
+    assert.deepEqual result, require "./doc-example.json"
+
   it "should configurably use a custom date pattern", ->
     input = "dAtE(Jan 5) Schedule a meeting with Nancy"
     options =

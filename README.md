@@ -60,7 +60,7 @@ var tasks = parser.relaxed("x 2014-07-04 (A) 2014-06-19 Document YTD spending on
     /* Indentation level of the task in character columns.
      * See hierarchical mode for more details
      */
-    "indentLevel": 0
+    "indentLevel": 2
   }
 ]
 ```
