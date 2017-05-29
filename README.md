@@ -1,5 +1,5 @@
 # todotxt-parser
-This is a Node.js module for parsing [the todo.txt format](todotxt.com) created by [Gina Trapani](http://ginatrapani.org/). A variety of configuration options allow it to parse a strict canonical todo.txt format, or a more relaxed version permitting more liberal whitespace, comments, user-defined metadata extensions, and even indented hierarchical tasks with metadata inheritance.
+This is a Node.js module for parsing [the todo.txt format](http://todotxt.com) created by [Gina Trapani](http://ginatrapani.org/). A variety of configuration options allow it to parse a strict canonical todo.txt format, or a more relaxed version permitting more liberal whitespace, comments, user-defined metadata extensions, and even indented hierarchical tasks with metadata inheritance.
 
 ## About the Format
 The todo.txt format attempts to maintain all the benefits of portable, human-readable flat files but still provide structured metadata for tools built on the format. For example, your `todo.txt` might look like this:
