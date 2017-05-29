@@ -1,0 +1,15 @@
+[
+  {
+    "raw": "x 2014-07-04 (A) 2014-06-19 Document YTD spending on +SocialEvents for @Alex due:2014-08-01",
+    "text": "Document YTD spending on +SocialEvents for @Alex due:2014-08-01",
+    "projects": ["SocialEvents"],
+    "contexts": ["Alex"],
+    "complete": true,
+    "dateCreated": "2014-06-19T00:00:00.000Z",
+    "dateCompleted": "2014-07-04T00:00:00.000Z",
+    "priority": "A",
+    "metadata": {"due": "2014-08-01"},
+    "subtasks": [],
+    "indentLevel": 2
+  }
+]
