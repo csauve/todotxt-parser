@@ -113,8 +113,8 @@ describe "standard mode parser", ->
 
         (text) ->
           metadataRegex = /(?:\s+|^)#(\S+)/g
-          hashtags: while match = metadataRegex.exec text
-            match[1]
+          hashtags: (while match = metadataRegex.exec text
+            match[1])
       ]
     assert.deepEqual result[0].metadata.hashtags, ["yolo", "swag"]
 

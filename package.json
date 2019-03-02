@@ -4,7 +4,7 @@
   "description": "A parser for Gina Trapani's todo.txt format with optional extended features",
   "main": "index.js",
   "scripts": {
-    "test": "node_modules/mocha/bin/_mocha --compilers coffee:coffee-script/register test/"
+    "test": "node_modules/mocha/bin/_mocha --require coffeescript/register test/*.{js,coffee}"
   },
   "repository": {
     "type": "git",
@@ -21,10 +21,11 @@
   },
   "homepage": "https://github.com/csauve/todotxt-parser",
   "dependencies": {
-    "coffee-script": "^1.8.0",
+    "coffeescript": "^2.3.2",
     "underscore": "^1.7.0"
   },
   "devDependencies": {
+    "coffeescript": "^2.3.2",
     "mocha": "^2.0.1"
   }
 }
