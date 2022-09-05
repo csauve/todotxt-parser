@@ -1,5 +1,5 @@
 assert = require "assert"
-parser = require ".."
+parser = require "../lib/parser"
 
 # test the parser against examples from the official format guide:
 # https://github.com/ginatrapani/todo.txt-cli/wiki/The-Todo.txt-Format

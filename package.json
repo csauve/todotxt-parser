@@ -2,8 +2,10 @@
   "name": "todotxt-parser",
   "version": "1.0.2",
   "description": "A parser for Gina Trapani's todo.txt format with optional extended features",
-  "main": "index.js",
+  "main": "dist/parser.js",
   "scripts": {
+    "prepublishOnly": "npm run build",
+    "build": "coffee --compile --transpile --inline-map -o dist lib",
     "test": "mocha --require coffeescript/register ./test/*.coffee"
   },
   "repository": {
@@ -20,11 +22,15 @@
     "url": "https://github.com/csauve/todotxt-parser/issues"
   },
   "homepage": "https://github.com/csauve/todotxt-parser",
+  "files": [
+    "dist/*.js"
+  ],
   "dependencies": {
-    "coffeescript": "^2.3.2",
     "underscore": "^1.9.1"
   },
   "devDependencies": {
+    "@babel/core": "^7.19.0",
+    "@babel/preset-env": "^7.19.0",
     "coffeescript": "^2.3.2",
     "mocha": "^6.0.2"
   }

@@ -1,5 +1,5 @@
 assert = require "assert"
-parser = require ".."
+parser = require "../lib/parser"
 
 describe "heirarchical mode parser", ->
 
